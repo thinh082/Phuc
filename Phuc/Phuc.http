@@ -1,0 +1,6 @@
+@Phuc_HostAddress = http://localhost:5021
+
+GET {{Phuc_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
