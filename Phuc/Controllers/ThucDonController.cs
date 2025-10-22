@@ -25,7 +25,9 @@ namespace Phuc.Controllers
                 r.Gia,
                 r.TenMon,
                 r.MonChinh,
-                r.HinhAnh
+                r.HinhAnh,
+                r.DoUong,
+                r.TrangMien
             }).ToList();
            var danhSachYeuThich = idTaiKhoan.HasValue?_context.MonAnYeuThiches
                 .Where(m => m.IdTaiKhoan == idTaiKhoan.Value)
@@ -34,7 +36,7 @@ namespace Phuc.Controllers
                     m.IdThucDonNavigation.Id,
                     m.IdThucDonNavigation.TenMon,
                     m.IdThucDonNavigation.Gia,
-                    m.IdThucDonNavigation.HinhAnh
+                    m.IdThucDonNavigation.HinhAnh,
                 })
                 .ToList() : null;
             return Ok(new

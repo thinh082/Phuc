@@ -17,6 +17,10 @@ public partial class ThucDon
 
     public bool? MonChinh { get; set; }
 
+    public bool? DoUong { get; set; }
+
+    public bool? TrangMien { get; set; }
+
     public virtual ICollection<ChiTietDatBan> ChiTietDatBans { get; set; } = new List<ChiTietDatBan>();
 
     public virtual ICollection<MonAnYeuThich> MonAnYeuThiches { get; set; } = new List<MonAnYeuThich>();

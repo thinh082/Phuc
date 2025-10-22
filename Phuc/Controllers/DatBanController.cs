@@ -64,6 +64,15 @@ namespace Phuc.Controllers
                             }
                         }
                     }
+                    var thanhToan = new ThanhToan
+                    {
+                        DonDatBanId = donDatBan.Id,
+                        PhuongThuc = datBan.PhuongThucThanhToan,
+                        TongTien = datBan.TongTien,
+                        TrangThai = datBan.PhuongThucThanhToan,
+                        NgayThanhToan = DateTime.Now
+                    };
+                    _context.ThanhToans.Add(thanhToan);
                     var thongBao = new ThongBao
                     {
                         IdTaiKhoan = datBan.TaiKhoanId,
@@ -128,6 +137,8 @@ namespace Phuc.Controllers
         public long TaiKhoanId { get; set; }
 
         public int? SoNguoi { get; set; }
+        public decimal TongTien { get; set; }
+        public string PhuongThucThanhToan { get; set; } = string.Empty;
 
         public string? TrangThai { get; set; }
 
