@@ -9,7 +9,7 @@ public partial class DonDatBan
 
     public long TaiKhoanId { get; set; }
 
-    public DateOnly NgayDat { get; set; }
+    public DateTime? NgayDat { get; set; }
 
     public TimeOnly GioDat { get; set; }
 

@@ -27,9 +27,13 @@ public partial class TaiKhoan
 
     public bool? TrangThai { get; set; }
 
+    public string? Code { get; set; }
+
     public virtual ICollection<DanhGium> DanhGia { get; set; } = new List<DanhGium>();
 
     public virtual ICollection<DonDatBan> DonDatBans { get; set; } = new List<DonDatBan>();
 
     public virtual LoaiTaiKhoan? LoaiTaiKhoan { get; set; }
+
+    public virtual ICollection<ThongBao> ThongBaos { get; set; } = new List<ThongBao>();
 }

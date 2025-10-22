@@ -25,9 +25,13 @@ public partial class PhucContext : DbContext
 
     public virtual DbSet<LoaiTaiKhoan> LoaiTaiKhoans { get; set; }
 
+    public virtual DbSet<MonAnYeuThich> MonAnYeuThiches { get; set; }
+
     public virtual DbSet<TaiKhoan> TaiKhoans { get; set; }
 
     public virtual DbSet<ThanhToan> ThanhToans { get; set; }
+
+    public virtual DbSet<ThongBao> ThongBaos { get; set; }
 
     public virtual DbSet<ThucDon> ThucDons { get; set; }
 
@@ -43,10 +47,6 @@ public partial class PhucContext : DbContext
             entity.ToTable("BanAn");
 
             entity.Property(e => e.TenBan).HasMaxLength(100);
-            entity.Property(e => e.TrangThai)
-                .HasMaxLength(50)
-                .HasDefaultValue("Trống");
-            entity.Property(e => e.ViTri).HasMaxLength(255);
         });
 
         modelBuilder.Entity<ChiTietDatBan>(entity =>
@@ -94,6 +94,7 @@ public partial class PhucContext : DbContext
             entity.ToTable("DonDatBan");
 
             entity.Property(e => e.GhiChu).HasMaxLength(255);
+            entity.Property(e => e.NgayDat).HasColumnType("datetime");
             entity.Property(e => e.NgayTao)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -116,6 +117,17 @@ public partial class PhucContext : DbContext
             entity.Property(e => e.TenLoai).HasMaxLength(100);
         });
 
+        modelBuilder.Entity<MonAnYeuThich>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__MonAnYeu__3214EC0734CA2520");
+
+            entity.ToTable("MonAnYeuThich");
+
+            entity.HasOne(d => d.IdThucDonNavigation).WithMany(p => p.MonAnYeuThiches)
+                .HasForeignKey(d => d.IdThucDon)
+                .HasConstraintName("FK_MonAnYeuThich_ThucDon");
+        });
+
         modelBuilder.Entity<TaiKhoan>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__TaiKhoan__3214EC07C00830A8");
@@ -124,6 +136,9 @@ public partial class PhucContext : DbContext
 
             entity.HasIndex(e => e.Email, "UQ__TaiKhoan__A9D10534C9E8938F").IsUnique();
 
+            entity.Property(e => e.Code)
+                .HasMaxLength(10)
+                .HasColumnName("code");
             entity.Property(e => e.Email).HasMaxLength(255);
             entity.Property(e => e.HinhAnh).HasMaxLength(255);
             entity.Property(e => e.HoTen).HasMaxLength(255);
@@ -158,6 +173,20 @@ public partial class PhucContext : DbContext
                 .HasForeignKey(d => d.DonDatBanId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__ThanhToan__DonDa__3D5E1FD2");
+        });
+
+        modelBuilder.Entity<ThongBao>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__ThongBao__3214EC07B003E8A3");
+
+            entity.ToTable("ThongBao");
+
+            entity.Property(e => e.NgayTao).HasColumnType("datetime");
+            entity.Property(e => e.TieuDe).HasMaxLength(255);
+
+            entity.HasOne(d => d.IdTaiKhoanNavigation).WithMany(p => p.ThongBaos)
+                .HasForeignKey(d => d.IdTaiKhoan)
+                .HasConstraintName("FK_ThongBao_TaiKhoan");
         });
 
         modelBuilder.Entity<ThucDon>(entity =>

@@ -9,11 +9,11 @@ public partial class BanAn
 
     public string? TenBan { get; set; }
 
+    public int? TrangThai { get; set; }
+
+    public int? IdTang { get; set; }
+
     public int? SoChoNgoi { get; set; }
-
-    public string? ViTri { get; set; }
-
-    public string? TrangThai { get; set; }
 
     public virtual ICollection<ChiTietDatBan> ChiTietDatBans { get; set; } = new List<ChiTietDatBan>();
 }
