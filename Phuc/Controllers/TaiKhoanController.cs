@@ -222,7 +222,7 @@ namespace Phuc.Controllers
             _context.TaiKhoans.Update(user);
             _context.SaveChanges();
 
-            return Ok(new { message = "Đổi mật khẩu thành công." });
+            return Ok(new { message = "Đổi mật khẩu thành công.",idTaiKhoan = user.Id });
         }
 
         [HttpPost("CapNhatThongTin")]
