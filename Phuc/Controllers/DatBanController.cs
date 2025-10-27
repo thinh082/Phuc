@@ -149,7 +149,7 @@ namespace Phuc.Controllers
                             var coDonKhac = _context.ChiTietDatBans
                                 .Any(ct => ct.BanAnId == ban.Id
                                         && ct.DonDatBanId != huyDatBan.DonDatBanId
-                                        && ct.DonDatBan.TrangThai != "Đã hủy"
+                                        && ct.DonDatBan.TrangThai != "Đã hủy"//
                                         && ct.DonDatBan.TrangThai != "Đã hoàn thành");
 
                             // Chỉ trả về trạng thái trống nếu không có đơn nào khác đang đặt bàn này
