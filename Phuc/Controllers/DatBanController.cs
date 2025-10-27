@@ -104,6 +104,100 @@ namespace Phuc.Controllers
             }
 
         }
+        [HttpPost("HuyDatBan")]
+        public IActionResult HuyDatBan([FromBody] HuyDatBanModel huyDatBan)
+        {
+            if (huyDatBan == null || huyDatBan.DonDatBanId <= 0)
+                return BadRequest("Dữ liệu không hợp lệ.");
+
+            try
+            {
+                using (var transaction = _context.Database.BeginTransaction())
+                {
+                    // 1️⃣ Tìm đơn đặt bàn
+                    var donDatBan = _context.DonDatBans.FirstOrDefault(d => d.Id == huyDatBan.DonDatBanId);
+
+                    if (donDatBan == null)
+                        return NotFound("Không tìm thấy đơn đặt bàn.");
+
+                    // Kiểm tra quyền hủy (chỉ người đặt mới được hủy)
+                    if (donDatBan.TaiKhoanId != huyDatBan.TaiKhoanId)
+                        return Forbid("Bạn không có quyền hủy đơn đặt bàn này.");
+
+                    // Kiểm tra trạng thái đơn (không cho hủy nếu đã hoàn thành hoặc đã hủy)
+                    if (donDatBan.TrangThai == "Đã hoàn thành" || donDatBan.TrangThai == "Đã hủy")
+                        return BadRequest($"Không thể hủy đơn đặt bàn có trạng thái '{donDatBan.TrangThai}'.");
+
+                    // 2️⃣ Cập nhật trạng thái đơn đặt bàn
+                    donDatBan.TrangThai = "Đã hủy";
+                    donDatBan.GhiChu = string.IsNullOrEmpty(donDatBan.GhiChu)
+                        ? $"Lý do hủy: {huyDatBan.LyDoHuy}"
+                        : $"{donDatBan.GhiChu}\nLý do hủy: {huyDatBan.LyDoHuy}";
+                    _context.DonDatBans.Update(donDatBan);
+
+                    // 3️⃣ Trả lại trạng thái bàn về "Trống"
+                    var chiTietDatBans = _context.ChiTietDatBans
+                        .Where(ct => ct.DonDatBanId == huyDatBan.DonDatBanId)
+                        .ToList();
+
+                    foreach (var chiTiet in chiTietDatBans)
+                    {
+                        var ban = _context.BanAns.FirstOrDefault(b => b.Id == chiTiet.BanAnId);
+                        if (ban != null)
+                        {
+                            // Kiểm tra xem bàn có đang được đặt cho đơn khác không
+                            var coDonKhac = _context.ChiTietDatBans
+                                .Any(ct => ct.BanAnId == ban.Id
+                                        && ct.DonDatBanId != huyDatBan.DonDatBanId
+                                        && ct.DonDatBan.TrangThai != "Đã hủy"
+                                        && ct.DonDatBan.TrangThai != "Đã hoàn thành");
+
+                            // Chỉ trả về trạng thái trống nếu không có đơn nào khác đang đặt bàn này
+                            if (!coDonKhac)
+                            {
+                                ban.TrangThai = 1; // 1 = Trống
+                                _context.BanAns.Update(ban);
+                            }
+                        }
+                    }
+
+                    // 4️⃣ Cập nhật trạng thái thanh toán
+                    var thanhToan = _context.ThanhToans.FirstOrDefault(tt => tt.DonDatBanId == huyDatBan.DonDatBanId);
+                    if (thanhToan != null)
+                    {
+                        thanhToan.TrangThai = "Đã hủy";
+                        _context.ThanhToans.Update(thanhToan);
+                    }
+
+                    // 5️⃣ Tạo thông báo hủy đặt bàn
+                    var thongBao = new ThongBao
+                    {
+                        IdTaiKhoan = donDatBan.TaiKhoanId,
+                        TieuDe = "Đơn đặt bàn đã được hủy",
+                        NoiDung = $"Đơn đặt bàn #{donDatBan.Id} vào ngày {donDatBan.NgayDat?.ToString("dd/MM/yyyy")} lúc {donDatBan.GioDat} đã được hủy.\nLý do: {huyDatBan.LyDoHuy}",
+                        NgayTao = DateTime.Now
+                    };
+                    _context.ThongBaos.Add(thongBao);
+
+                    _context.SaveChanges();
+                    transaction.Commit();
+
+                    return Ok(new
+                    {
+                        message = "Hủy đặt bàn thành công!",
+                        donDatBanId = donDatBan.Id
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = "Lỗi hệ thống: " + ex.Message,
+                    inner = ex.InnerException?.Message
+                });
+            }
+        }
         [HttpPost("LichSuDatBan")]
         public async Task<IActionResult> LichSuDatBan([FromBody] long taiKhoanId)
         {
@@ -144,6 +238,13 @@ namespace Phuc.Controllers
 
         public string? GhiChu { get; set; }
         public List<ChiTietDatBanModel>? ChiTietDatBans { get; set; }
+    }
+
+    public class HuyDatBanModel
+    {
+        public long DonDatBanId { get; set; }
+        public long TaiKhoanId { get; set; }
+        public string LyDoHuy { get; set; } = string.Empty;
     }
     public class ChiTietDatBanModel
     {

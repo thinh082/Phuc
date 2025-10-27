@@ -4,3 +4,22 @@ GET {{Phuc_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+### Hủy đặt bàn
+POST {{Phuc_HostAddress}}/api/DatBan/HuyDatBan
+Content-Type: application/json
+
+{
+  "donDatBanId": 1,
+  "taiKhoanId": 1
+}
+
+###
+
+### Lấy lịch sử đặt bàn
+POST {{Phuc_HostAddress}}/api/DatBan/LichSuDatBan
+Content-Type: application/json
+
+1
+
+###
