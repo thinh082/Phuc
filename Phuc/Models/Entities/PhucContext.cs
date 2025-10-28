@@ -27,6 +27,8 @@ public partial class PhucContext : DbContext
 
     public virtual DbSet<MonAnYeuThich> MonAnYeuThiches { get; set; }
 
+    public virtual DbSet<NgayDatBanAn> NgayDatBanAns { get; set; }
+
     public virtual DbSet<TaiKhoan> TaiKhoans { get; set; }
 
     public virtual DbSet<ThanhToan> ThanhToans { get; set; }
@@ -128,6 +130,19 @@ public partial class PhucContext : DbContext
                 .HasConstraintName("FK_MonAnYeuThich_ThucDon");
         });
 
+        modelBuilder.Entity<NgayDatBanAn>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__NgayDatB__3214EC07A2FD8D61");
+
+            entity.ToTable("NgayDatBanAn");
+
+            entity.Property(e => e.NgayDat).HasColumnType("datetime");
+
+            entity.HasOne(d => d.IdBanAnNavigation).WithMany(p => p.NgayDatBanAns)
+                .HasForeignKey(d => d.IdBanAn)
+                .HasConstraintName("FK_NgayDatBanAn_BanAn");
+        });
+
         modelBuilder.Entity<TaiKhoan>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__TaiKhoan__3214EC07C00830A8");
@@ -162,8 +177,12 @@ public partial class PhucContext : DbContext
 
             entity.ToTable("ThanhToan");
 
+            entity.Property(e => e.LyDoHoanTien).HasMaxLength(255);
+            entity.Property(e => e.NgayHoanTien).HasColumnType("datetime");
             entity.Property(e => e.NgayThanhToan).HasColumnType("datetime");
             entity.Property(e => e.PhuongThuc).HasMaxLength(50);
+            entity.Property(e => e.PhuongThucHoan).HasMaxLength(50);
+            entity.Property(e => e.SoTienHoan).HasColumnType("decimal(18, 0)");
             entity.Property(e => e.TongTien).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.TrangThai)
                 .HasMaxLength(50)

@@ -16,4 +16,6 @@ public partial class BanAn
     public int? SoChoNgoi { get; set; }
 
     public virtual ICollection<ChiTietDatBan> ChiTietDatBans { get; set; } = new List<ChiTietDatBan>();
+
+    public virtual ICollection<NgayDatBanAn> NgayDatBanAns { get; set; } = new List<NgayDatBanAn>();
 }
