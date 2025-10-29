@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Phuc.Models.Entities;
+using System.Globalization;
 
 namespace Phuc.Controllers
 {
@@ -23,6 +24,22 @@ namespace Phuc.Controllers
             {
                 using (var transaction = _context.Database.BeginTransaction())
                 {
+                    // Chuẩn hoá ngày đặt: nhận từ DatBanModel.NgayDat (string?) → DateTime (date-only)
+                    DateTime ngayDatValue = DateTime.Today;
+                    if (!string.IsNullOrWhiteSpace(datBan.NgayDat))
+                    {
+                        // Thử parse tự do trước
+                        if (!DateTime.TryParse(datBan.NgayDat, out ngayDatValue))
+                        {
+                            var formats = new[] { "dd/MM/yyyy", "yyyy-MM-dd", "MM/dd/yyyy", "dd-MM-yyyy", "yyyyMMdd" };
+                            if (!DateTime.TryParseExact(datBan.NgayDat, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out ngayDatValue))
+                            {
+                                return BadRequest("Định dạng Ngày Đặt không hợp lệ. Hỗ trợ: dd/MM/yyyy, yyyy-MM-dd, MM/dd/yyyy, dd-MM-yyyy, yyyyMMdd");
+                            }
+                        }
+                        ngayDatValue = ngayDatValue.Date; // chỉ lấy phần ngày
+                    }
+
                     // 1️⃣ Tạo mới đơn đặt bàn
                     var donDatBan = new DonDatBan
                     {
@@ -30,7 +47,7 @@ namespace Phuc.Controllers
                         SoNguoi = datBan.SoNguoi ?? 0,
                         TrangThai = datBan.TrangThai,
                         GhiChu = datBan.GhiChu,
-                        NgayDat = DateTime.Now,
+                        NgayDat = ngayDatValue,
                         GioDat = TimeOnly.FromDateTime(DateTime.Now), // ✅ Đúng cú pháp
                         NgayTao = DateTime.Now
                     };
@@ -55,12 +72,12 @@ namespace Phuc.Controllers
 
                             _context.ChiTietDatBans.Add(chiTiet);
 
-                            // 3️⃣ Cập nhật trạng thái bàn sang "Đang đặt"
-                            var ban = _context.BanAns.FirstOrDefault(b => b.Id == item.BanAnId);
+                            // 3️⃣ Cập nhật trạng thái bàn sang "Đang đặt" theo ngày đặt đã chọn
+                            var ban = _context.NgayDatBanAns.FirstOrDefault(b => b.IdBanAn == item.BanAnId && b.NgayDat.HasValue && b.NgayDat.Value.Date == ngayDatValue.Date);
                             if (ban != null)
                             {
-                                ban.TrangThai = 2;
-                                _context.BanAns.Update(ban);
+                                ban.TinhTrang = false;
+                                _context.NgayDatBanAns.Update(ban);
                             }
                         }
                     }
@@ -233,6 +250,7 @@ namespace Phuc.Controllers
         public int? SoNguoi { get; set; }
         public decimal TongTien { get; set; }
         public string PhuongThucThanhToan { get; set; } = string.Empty;
+        public string? NgayDat { get; set; }
 
         public string? TrangThai { get; set; }
 

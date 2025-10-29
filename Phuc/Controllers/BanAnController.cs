@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Phuc.Models.Entities;
 using System;
 using System.Linq;
+using System.Globalization;
 
 namespace Phuc.Controllers
 {
@@ -162,33 +163,48 @@ namespace Phuc.Controllers
             });
         }
 
-        // DELETE: api/BanAn/XoaBanAn/{id}
-        [HttpDelete("XoaBanAn/{id}")]
-        public IActionResult XoaBanAn(long id)
+        // POST: api/BanAn/HuyTrangThaiBanAn
+        [HttpPost("HuyTrangThaiBanAn")]
+        public IActionResult HuyTrangThaiBanAn([FromBody] HuyTrangThaiBanAnRequest request)
         {
-            var ban = _context.BanAns.FirstOrDefault(b => b.Id == id);
+            if (request == null)
+            {
+                return BadRequest(new { message = "Body không hợp lệ." });
+            }
+
+            if (request.BanAnId <= 0)
+            {
+                return BadRequest(new { message = "BanAnId không hợp lệ." });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.NgayDat))
+            {
+                return BadRequest(new { message = "Vui lòng truyền NgayDat theo định dạng dd-MM-yyyy." });
+            }
+
+            if (!DateTime.TryParseExact(request.NgayDat, "dd-MM-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime ngay))
+            {
+                return BadRequest(new { message = "Định dạng ngày không hợp lệ. Vui lòng sử dụng dd-MM-yyyy." });
+            }
+
+            var ban = _context.BanAns.FirstOrDefault(b => b.Id == request.BanAnId);
             if (ban == null)
             {
                 return NotFound(new { message = "Không tìm thấy bàn." });
             }
 
-            var soChiTietDatBan = _context.ChiTietDatBans.Count(c => c.BanAnId == id);
-            var soNgayDatBan = _context.NgayDatBanAns.Count(n => n.IdBanAn == id);
-
-            if (soChiTietDatBan > 0 || soNgayDatBan > 0)
+            var ngayDatBan = _context.NgayDatBanAns.FirstOrDefault(n => n.IdBanAn == request.BanAnId && n.NgayDat.HasValue && n.NgayDat.Value.Date == ngay.Date);
+            if (ngayDatBan == null)
             {
-                return BadRequest(new
-                {
-                    message = "Không thể xóa vì đang có dữ liệu liên quan.",
-                    chiTietDatBan = soChiTietDatBan,
-                    ngayDatBanAn = soNgayDatBan
-                });
+                return NotFound(new { message = "Không có trạng thái đặt bàn cho ngày này." });
             }
 
-            _context.BanAns.Remove(ban);
+            // Hủy trạng thái đặt bàn: đặt lại về khả dụng
+            ngayDatBan.TinhTrang = true;
+            _context.NgayDatBanAns.Update(ngayDatBan);
             _context.SaveChanges();
 
-            return Ok(new { message = "Xóa bàn ăn thành công.", id });
+            return Ok(new { message = "Hủy trạng thái bàn ăn thành công.", banAnId = request.BanAnId, ngayDat = ngay.ToString("dd-MM-yyyy"), tinhTrang = ngayDatBan.TinhTrang });
         }
 
         public class TaoBanAnRequest
@@ -197,6 +213,12 @@ namespace Phuc.Controllers
             public int? TrangThai { get; set; }
             public int? IdTang { get; set; }
             public int? SoChoNgoi { get; set; }
+        }
+
+        public class HuyTrangThaiBanAnRequest
+        {
+            public long BanAnId { get; set; }
+            public string NgayDat { get; set; }
         }
     }
 }
